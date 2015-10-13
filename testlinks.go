@@ -5,14 +5,13 @@ import (
 	"bufio"
 	"os"
 	"net/http"
+	"sync"
 )
 
 func ReadLinks() (List []LinksType){
 	var Links []LinksType
 	file, er := os.OpenFile("Links.json",os.O_RDONLY,777)
-	if er != nil{
-		
-	}
+	checkerr(er)
 	scanner := bufio.NewScanner(file)
 	var a LinksType
 	for scanner.Scan() {
@@ -21,26 +20,36 @@ func ReadLinks() (List []LinksType){
 		json.Unmarshal(s, &a)
 		Links = append(Links, a)
 	}
-	fmt.Println(Links)
 	return Links
 }
-func TestLink(List []LinksType,url string)  []string{
-	var SliceLinksFound []string
-	for _, link := range List{
+func TestLink(List ,Output chan LinksType,url string,WG *sync.WaitGroup)  {
+	for {
+		link,more := <- List
+		if more == false {
+			break
+			
+		}
+		fmt.Println(url+link.Link)
 		response, err := http.Get(url+link.Link)
-		if err != nil{
-			fmt.Println(err)
+		checkerr(err)
+		if response.StatusCode == 200{
+			if response.Body != nil{
+				link.Link = url+link.Link
+				Output <- link
+				fmt.Println(link)
+				response.Body.Close()
+			}
 		}
-		if response.StatusCode == 404{
-			fmt.Println(url+link.Link+" Not Found")
-			response.Body.Close()
-			continue 
-		}
-		SliceLinksFound = append(SliceLinksFound,url+link.Link)
-		defer response.Body.Close()
+		WG.Done()
 	}
-	return SliceLinksFound
 }
 type LinksType struct {
 	Link string
+	Cve string
+	
+	Description string
+	
+	PatchLink string
+	
+	Danger int64 //from 1 to 10k for exmpl
 }
