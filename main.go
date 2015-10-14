@@ -11,7 +11,6 @@ func main(){
 	var WG sync.WaitGroup
 	for _,arr := range r {
 		chanLinks <- arr
-		WG.Add(1)
 	}
 	close(chanLinks)
 	goroutines := 50

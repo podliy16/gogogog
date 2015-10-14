@@ -22,13 +22,9 @@ func ReadLinks() (List []LinksType){
 	}
 	return Links
 }
-func TestLink(List ,Output chan LinksType,url string,WG *sync.WaitGroup)  {
-	for {
-		link,more := <- List
-		if more == false {
-			break
-			
-		}
+func TestLink(List chan LinksType,Output chan LinksType,url string,WG *sync.WaitGroup)  {
+	for link := range List{
+		WG.Add(1)
 		fmt.Println(url+link.Link)
 		response, err := http.Get(url+link.Link)
 		checkerr(err)
