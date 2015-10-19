@@ -2,7 +2,9 @@ package main
 
 import (
     "net"
+	"strconv"
 	"fmt"
+	"github.com/yasushi-saito/fifo_queue"
 )
 
 const PORTS_NUMBER = 4
@@ -20,7 +22,7 @@ func CloseConnects(connects [PORTS_NUMBER]Connect) (err error) {
 }
 
 func CreateConnects() (connects [PORTS_NUMBER]Connect, err error) {
-	ports := [PORTS_NUMBER]string{"52631", "52632", "52633", "52635"}
+	ports := [PORTS_NUMBER]string{"5261", "5262", "5263", "5264"}
 	for i:=0; i < PORTS_NUMBER; i++ {
 		port := ports[i]
 		fmt.Println("localhost:" + port)
@@ -35,55 +37,92 @@ func CreateConnects() (connects [PORTS_NUMBER]Connect, err error) {
 	return connects, nil
 }
 
-func SendData(data string, connects *[PORTS_NUMBER]Connect, results chan string) (success bool, err error) {
+//connect
+
+func writeToConnect(data string, connect *Connect,results chan string,checkServ chan *Connect){
+	go Reader(*connect, results,checkServ)
+	connect.state = false
+	connect.Write([]byte(data))
+}
+
+func SendData(data string, connects *[PORTS_NUMBER]Connect, results chan string,
+			checkServ chan *Connect) (success bool, err error) {
+	
 	success = false
 	for i:=0; i < PORTS_NUMBER; i++ {
 		connect := &connects[i]
 		if connect.state == false {
 			continue
 		}
-		go Reader(*connect, results)
-		connect.state = false
-		connect.Write([]byte(data))
+		writeToConnect(data,connect,results,checkServ)
 		if err != nil {
 			return false, err
 		}
 		success = true
 		break
-	}
+	} 
 	return success, nil
 }
 
+func CheckServ(c chan *Connect,results chan string,q *fifo_queue.Queue,len_q int){
+	for len_q != 0{
+		connect := <-c
+		if q.Len()!=0{
+			writeToConnect(q.PopFront().(string),connect,results,c)		 		
+		}
+		len_q -- 
+	}
+}
 
-func Reader(r Connect, results chan string) {
+func Reader(r Connect, results chan string,checkServ chan *Connect) {
     buf := make([]byte, 1024)
     n, err := r.Read(buf[:])
-    if err != nil {
+    r.state = true
+	if err != nil {
         panic(err)
     }
+	checkServ <- &r
 	results <- string(buf[0:n])
 }
 
 
 func main() {
-	results := make(chan string, 100)
+	
+	results := make(chan string)
+	checkServ := make(chan *Connect)
+	
+	q := fifo_queue.NewQueue()
+	
+	for  i:=0;i<8;i++{
+		q.PushBack(strconv.Itoa(i))
+	}
+	len_q := q.Len()
+	
 	connects, err := CreateConnects()
+	
 	if err != nil {
 		panic(err)
 	}
+	
 	var success bool
+	
+	go CheckServ(checkServ,results,q,len_q)
+		
 	//Test closed connections. First 4 success -- true, last one -- false
-	success, err = SendData("hi", &connects, results)
-	fmt.Println(connects, success)
-	success, err = SendData("hi2", &connects, results)
-	fmt.Println(connects, success)
-	success, err = SendData("HI3", &connects, results)
-	fmt.Println(connects, success)
-	success, err = SendData("HI4", &connects, results)
-	fmt.Println(connects, success)
-	success, err = SendData("HI5", &connects, results)
-	fmt.Println(connects, success)
-	for result := range results {
-		fmt.Println("Client got: " + result)
+	for i:=0;i<len_q;i++{
+		item := q.PopFront().(string)
+		success, err = SendData(item, &connects, results,checkServ)
+		fmt.Println(connects, success)
+		if success == false{
+			q.PushBack(item)
+		}
+	}
+	
+	if err!=nil{
+		fmt.Println(err)
+	}
+	
+	for i:=0;i<len_q;i++ {
+		fmt.Println("Client got: " + <-results)
 	}
 }
