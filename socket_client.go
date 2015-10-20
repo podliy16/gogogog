@@ -2,12 +2,12 @@ package main
 
 import (
     "net"
-	"strconv"
+//	"strconv"
 	"fmt"
 	"github.com/yasushi-saito/fifo_queue"
 )
 
-const PORTS_NUMBER = 4
+const PORTS_NUMBER = 2
 
 type Connect struct {
 	state bool
@@ -22,7 +22,7 @@ func CloseConnects(connects [PORTS_NUMBER]Connect) (err error) {
 }
 
 func CreateConnects() (connects [PORTS_NUMBER]Connect, err error) {
-	ports := [PORTS_NUMBER]string{"5261", "5262", "5263", "5264"}
+	ports := [PORTS_NUMBER]string{"5270", "5271"}
 	for i:=0; i < PORTS_NUMBER; i++ {
 		port := ports[i]
 		fmt.Println("localhost:" + port)
@@ -33,7 +33,6 @@ func CreateConnects() (connects [PORTS_NUMBER]Connect, err error) {
 		connect := Connect{true, c}
 		connects[i] = connect
 	}
-	fmt.Println(connects)
 	return connects, nil
 }
 
@@ -42,12 +41,12 @@ func CreateConnects() (connects [PORTS_NUMBER]Connect, err error) {
 func writeToConnect(data string, connect *Connect,results chan string,checkServ chan *Connect){
 	go Reader(*connect, results,checkServ)
 	connect.state = false
+	data = "-u " + data
 	connect.Write([]byte(data))
 }
 
 func SendData(data string, connects *[PORTS_NUMBER]Connect, results chan string,
 			checkServ chan *Connect) (success bool, err error) {
-	
 	success = false
 	for i:=0; i < PORTS_NUMBER; i++ {
 		connect := &connects[i]
@@ -86,15 +85,14 @@ func Reader(r Connect, results chan string,checkServ chan *Connect) {
 }
 
 
-func main() {
-	
+func socketMain(DoneLinks []LinksType) (<-chan string, int) {
 	results := make(chan string)
 	checkServ := make(chan *Connect)
-	
+
 	q := fifo_queue.NewQueue()
 	
-	for  i:=0;i<8;i++{
-		q.PushBack(strconv.Itoa(i))
+	for _, Link := range DoneLinks{
+		q.PushBack(Link.Link)
 	}
 	len_q := q.Len()
 	
@@ -112,7 +110,6 @@ func main() {
 	for i:=0;i<len_q;i++{
 		item := q.PopFront().(string)
 		success, err = SendData(item, &connects, results,checkServ)
-		fmt.Println(connects, success)
 		if success == false{
 			q.PushBack(item)
 		}
@@ -122,7 +119,5 @@ func main() {
 		fmt.Println(err)
 	}
 	
-	for i:=0;i<len_q;i++ {
-		fmt.Println("Client got: " + <-results)
-	}
+	return results, len_q
 }

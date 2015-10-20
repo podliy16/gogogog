@@ -1,10 +1,2 @@
-{"Link":"/index.php?=","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/1","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/2","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/3","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/4","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/5","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/6","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/7","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/","CVE":"1337","Description":"","PatchLink":"","Danger":10}
-{"Link":"/","CVE":"1337","Description":"","PatchLink":"","Danger":100}
+{"Link":"/photo-gallery.php?id=1","CVE":"1337","Description":"","PatchLink":"","Danger":10}
+{"Link":"/photo-gallery.php?id=1","CVE":"1337","Description":"","PatchLink":"","Danger":10}

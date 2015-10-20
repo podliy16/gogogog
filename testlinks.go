@@ -1,6 +1,5 @@
 package main
 import (
-	"fmt"
 	"encoding/json"
 	"bufio"
 	"os"
@@ -24,15 +23,12 @@ func ReadLinks() (List []LinksType){
 }
 func TestLink(List chan LinksType,Output chan LinksType,url string,WG *sync.WaitGroup)  {
 	for link := range List{
-		WG.Add(1)
-		fmt.Println(url+link.Link)
 		response, err := http.Get(url+link.Link)
 		checkerr(err)
 		if response.StatusCode == 200{
 			if response.Body != nil{
 				link.Link = url+link.Link
 				Output <- link
-				fmt.Println(link)
 				response.Body.Close()
 			}
 		}
