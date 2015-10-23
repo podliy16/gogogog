@@ -7,6 +7,7 @@ See the file 'doc/COPYING' for copying permission
 
 import os
 import re
+import json
 import GLOBALSS
 
 from lib.controller.action import action
@@ -128,7 +129,36 @@ def _selectInjection():
             raise SqlmapValueException(errMsg)
 
         kb.injection = kb.injections[index]
+        
+def _formatJsonInjection(inj):
+    data = {}
+    #param - parametrs , t - type , i - injections
+    paramType = conf.method if conf.method not in (None, HTTPMETHOD.GET, HTTPMETHOD.POST) else inj.place
+    data["param"] =  {"param":inj.parameter,"t":paramType}
+    data["i"] = []
+    for stype, sdata in inj.data.items():
+        title = sdata.title
+        vector = sdata.vector
+        comment = sdata.comment
+        payload = agent.adjustLateValues(sdata.payload)
+        if inj.place == PLACE.CUSTOM_HEADER:
+            payload = payload.split(',', 1)[1]
+        if stype == PAYLOAD.TECHNIQUE.UNION:
+            count = re.sub(r"(?i)(\(.+\))|(\blimit[^A-Za-z]+)", "", sdata.payload).count(',') + 1
+            title = re.sub(r"\d+ to \d+", str(count), title)
+            vector = agent.forgeUnionQuery("[QUERY]", vector[0], vector[1], vector[2], None, None, vector[5], vector[6])
+            if count == 1:
+                title = title.replace("columns", "column")
+        elif comment:
+            vector = "%s%s" % (vector, comment)
+            #ti - title , p - payload , v - vector
+        tmp_data = {"t":PAYLOAD.SQLINJECTION[stype],"ti":title,"p":urldecode(payload, unsafe="&", plusspace=(inj.place != PLACE.GET and kb.postSpaceToPlus))}
+        if conf.verbose > 1:
+            tmp_data["v"] = vector
+        data["i"].append(tmp_data)   
 
+    return data
+    
 def _formatInjection(inj):
     paramType = conf.method if conf.method not in (None, HTTPMETHOD.GET, HTTPMETHOD.POST) else inj.place
     data = "Parameter: %s (%s)\n" % (inj.parameter, paramType)
@@ -166,12 +196,18 @@ def _showInjections():
         conf.dumper.string("", kb.injections, content_type=CONTENT_TYPE.TECHNIQUES)
     else:
         data = "".join(set(map(lambda x: _formatInjection(x), kb.injections))).rstrip("\n")
+        data_json = map(lambda x: _formatJsonInjection(x), kb.injections)
+        dumps_json = json.dumps(data_json)
+        while len(dumps_json) > 1020 :
+            data_json[0]["i"] = data_json[0]["i"][:-1] 
+            dumps_json = json.dumps(data_json)
+        print("LEN------------------------------------------------->"+str(len(data_json)))
         # TODO: RETURN DATA TO SOCKET
         #global conn
         conn = GLOBALSS.myList[0]
         print(conn)
-        conn.send(data)
-    #    conn.close()
+        conn.send(dumps_json)
+    #   conn.close()
         conf.dumper.string(header, data)
 
     if conf.tamper:
@@ -552,8 +588,11 @@ def start():
                             finally:
                                 if place == PLACE.COOKIE:
                                     kb.mergeCookies = popValue()
-
+    
             if len(kb.injections) == 0 or (len(kb.injections) == 1 and kb.injections[0].place is None):
+                conn = GLOBALSS.myList[0]
+                print(conn)
+                conn.send(json.dumps({"result":False}))
                 if kb.vainRun and not conf.multipleTargets:
                     errMsg = "no parameter(s) found for testing in the provided data "
                     errMsg += "(e.g. GET parameter 'id' in 'www.site.com/index.php?id=1')"

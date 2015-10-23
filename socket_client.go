@@ -16,9 +16,11 @@ type Connect struct {
 }
 
 func CloseConnects(connects [PORTS_NUMBER]Connect) (err error) {
+	
 	for i:=0; i < PORTS_NUMBER; i++ {
 		connects[i].Close()
 	}
+	
 	return nil
 }
 
@@ -92,7 +94,7 @@ func Reader(r Connect, results chan string,checkServ chan *Connect) {
 }
 
 
-func socketMain(DoneLinks []LinksType) (<-chan string, int) {
+func socketMain(DoneLinks []LinksType) (<-chan string, int, [PORTS_NUMBER]Connect) {
 	results := make(chan string)
 	checkServ := make(chan *Connect)
 
@@ -126,5 +128,5 @@ func socketMain(DoneLinks []LinksType) (<-chan string, int) {
 		fmt.Println(err)
 	}
 	
-	return results, len_q
+	return results, len_q, connects
 }

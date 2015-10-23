@@ -828,6 +828,7 @@ def cmdLineParser(argv=None):
         #global conn
         conn = GLOBALSS.myList[0] 
         data = conn.recv(1024)
+   #     print("SUDA!!!!!!"+str(len(data)))
         if len(data) == 0 :
             GLOBALSS.myList = []
             conn.close()
