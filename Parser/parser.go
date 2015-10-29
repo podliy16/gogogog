@@ -90,9 +90,9 @@ func searchAndWriteExploit() {
 	scanner := bufio.NewScanner(text)
 	for scanner.Scan() {
 		scan := scanner.Text()
-		x, _ := regexp.MatchString(`option=.*'|option=.*d|option=.*d`, scan)
+		x, _ := regexp.MatchString(`option=com_rpl.*[d1t']`, scan)
 		if x == true {
-			re := regexp.MustCompile(`option=.*'|option=.*d|option=.*d`)
+			re := regexp.MustCompile(`option=com_rpl.*[d1t']`)
 			inj := re.FindString(scan)
 			links := LinksType{Link: inj}
 			marshToJson(links, "Links.json")
