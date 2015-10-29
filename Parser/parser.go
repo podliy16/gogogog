@@ -35,7 +35,7 @@ func main() {
 	checkerr(err)
 	err = os.Remove("textTemp.txt")
 	checkerr(err)
-	os.Exit(1)
+	os.Exit(0)
 }
 
 func parseStartLink() {
