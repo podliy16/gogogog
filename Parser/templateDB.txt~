@@ -1,0 +1,16 @@
+option=.*'|option=.*d|option=.*1|option.*t
+`option=.*d`
+`option=.*1`
+`option=.*t`
+`/admin.*id=...`
+`/index.*id=...`
+`/php.*=0'?`
+`/load-data.*}`
+`/zeu.*/admin.*=insert'`
+`/tk.*php.*r`
+`/wordpress.*id=.*`
+`/wordpress.*data`
+`/event.*do`
+`/wp.*php.*settings`
+`/sys.*script.*`
+`mode=.*=0`
