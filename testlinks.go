@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"sync"
@@ -27,9 +26,7 @@ func TestLink(List chan LinksType, Output chan LinksType, url string, WG *sync.W
 	for link := range List {
 		response, err := http.Get(url + link.Link)
 		checkerr(err)
-		fmt.Println(url + link.Link)
-		fmt.Println(response)
-
+		
 		if response.StatusCode == 200 {
 			if response.Body != nil {
 				link.Link = url + link.Link

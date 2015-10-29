@@ -196,10 +196,11 @@ def _showInjections():
         conf.dumper.string("", kb.injections, content_type=CONTENT_TYPE.TECHNIQUES)
     else:
         data = "".join(set(map(lambda x: _formatInjection(x), kb.injections))).rstrip("\n")
-        data_json = map(lambda x: _formatJsonInjection(x), kb.injections)
+        data_json = {}
+        data_json["main"] = map(lambda x: _formatJsonInjection(x), kb.injections)
         dumps_json = json.dumps(data_json)
-        while len(dumps_json) > 1020 :
-            data_json[0]["i"] = data_json[0]["i"][:-1] 
+        while len(dumps_json) > 1010 :
+            data_json["main"][0]["i"] = data_json["main"][0]["i"][:-1] 
             dumps_json = json.dumps(data_json)
         print("LEN------------------------------------------------->"+str(len(data_json)))
         # TODO: RETURN DATA TO SOCKET
@@ -592,7 +593,7 @@ def start():
             if len(kb.injections) == 0 or (len(kb.injections) == 1 and kb.injections[0].place is None):
                 conn = GLOBALSS.myList[0]
                 print(conn)
-                conn.send(json.dumps({"result":False}))
+                conn.send("false")
                 if kb.vainRun and not conf.multipleTargets:
                     errMsg = "no parameter(s) found for testing in the provided data "
                     errMsg += "(e.g. GET parameter 'id' in 'www.site.com/index.php?id=1')"

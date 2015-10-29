@@ -2,7 +2,6 @@ package main
 
 import (
     "net"
-//	"strconv"
 	"fmt"
 	"io"
 	"github.com/yasushi-saito/fifo_queue"

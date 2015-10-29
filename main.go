@@ -16,7 +16,7 @@ func main() {
 	}
 	close(chanLinks)
 	goroutines := 50
-	url := "https://yandex.ru"
+	url := "https://www.yandex.ru"
 	for i := 0; i < goroutines; i++ {
 		go TestLink(chanLinks, chanOutputLinks, url, &WG)
 	}
@@ -26,10 +26,14 @@ func main() {
 	for DoneLink := range chanOutputLinks {
 		DoneLinks = append(DoneLinks, DoneLink)
 	}
-	fmt.Println(DoneLinks)
 	results, count, connects := socketMain(DoneLinks)
 	for i := 0; i < count; i++ {
-		fmt.Println("Client got: " + <-results)
+		answear := <- results
+		if answear != "false"{
+			fmt.Println(answear)
+			parseAnswear(answear)	
+		}
+		fmt.Println("Client got: " + answear)
 	}
 	CloseConnects(connects)
 }
